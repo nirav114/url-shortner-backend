@@ -26,7 +26,7 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 }
 
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
-	var payload types.RequestUserPayload
+	var payload types.LoginUserPayload
 	if err := utils.ParseJSON(r, &payload); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 	}
