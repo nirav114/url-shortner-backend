@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/nirav114/url-shortner-backend.git/services/url"
 	"github.com/nirav114/url-shortner-backend.git/services/user"
 )
 
@@ -25,6 +26,10 @@ func (s *APIServer) Run() error {
 	userStore := user.NewStore(s.db)
 	userHandler := user.NewHandler(userStore)
 	userHandler.RegisterRoutes(subrouter)
+
+	urlStore := url.NewStore(s.db)
+	urlHandler := url.NewHandler(urlStore)
+	urlHandler.RegisterRoutes(subrouter)
 
 	log.Println("Serving on", s.addr)
 	return http.ListenAndServe(s.addr, router)
