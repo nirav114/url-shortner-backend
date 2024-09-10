@@ -3,6 +3,7 @@ package url
 import (
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/nirav114/url-shortner-backend.git/types"
 )
@@ -59,8 +60,27 @@ func (s *Store) RemoveUrl(shortUrl string) error {
 	return nil
 }
 
-func (s *Store) GetUrlsByUserID(id int) ([]*types.Url, error) {
-	return []*types.Url{}, nil
+func (s *Store) GetUrlsByUserID(id int64) ([]*types.UrlResponse, error) {
+	rows, err := s.db.Query("SELECT * FROM urls WHERE userID = ?", id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var urls []*types.UrlResponse
+	for rows.Next() {
+		url, err := scanRowIntoUrl(rows)
+		if err != nil {
+			return nil, err
+		}
+		urls = append(urls, &types.UrlResponse{ShortUrl: url.ShortUrl, FullUrl: url.FullUrl})
+	}
+	log.Println(urls, id)
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return urls, nil
 }
 
 func scanRowIntoUrl(row *sql.Rows) (*types.Url, error) {

@@ -33,7 +33,7 @@ type GetAllUrlPayload struct {
 }
 
 type User struct {
-	ID        int       `json:"id"`
+	ID        int64     `json:"id"`
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
 	Password  string    `json:"-"`
@@ -41,15 +41,20 @@ type User struct {
 }
 
 type Url struct {
-	ID       int    `json:"id"`
+	ID       int64  `json:"id"`
 	ShortUrl string `json:"shortUrl"`
 	FullUrl  string `json:"fullUrl"`
 	UserID   int64  `json:"userID"`
 }
 
+type UrlResponse struct {
+	ShortUrl string `json:"shortUrl"`
+	FullUrl  string `json:"fullUrl"`
+}
+
 type UserStore interface {
 	GetUserByEmail(email string) (*User, error)
-	GetUserByID(id int) (*User, error)
+	GetUserByID(id int64) (*User, error)
 	CreateUser(User) error
 }
 
@@ -58,5 +63,5 @@ type UrlStore interface {
 	CreateUrl(Url) error
 	ModifyUrl(oldUrl Url, newUrl Url) error
 	RemoveUrl(shortUrl string) error
-	GetUrlsByUserID(id int) ([]*Url, error)
+	GetUrlsByUserID(id int64) ([]*UrlResponse, error)
 }

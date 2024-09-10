@@ -50,7 +50,7 @@ func scanRowIntoUser(row *sql.Rows) (*types.User, error) {
 	return user, nil
 }
 
-func (s *Store) GetUserByID(id int) (*types.User, error) {
+func (s *Store) GetUserByID(id int64) (*types.User, error) {
 	rows, err := s.db.Query("SELECT * FROM users WHERE id=?", id)
 	if err != nil {
 		return nil, err

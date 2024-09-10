@@ -8,11 +8,11 @@ import (
 	"github.com/nirav114/url-shortner-backend.git/config"
 )
 
-func CreateJWT(secret []byte, userID int) (string, error) {
+func CreateJWT(secret []byte, userID int64) (string, error) {
 	expiration := time.Second * time.Duration(config.EnvConfig.JWTExpirationInSeconds)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userid":    strconv.Itoa(userID),
+		"userid":    strconv.FormatInt(userID, 10),
 		"expiredAt": time.Now().Add(expiration).Unix(),
 	})
 

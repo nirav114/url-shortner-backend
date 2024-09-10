@@ -2,6 +2,7 @@ package url
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -84,7 +85,7 @@ func (h *Handler) handleModifyUrl(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleRemoveUrl(w http.ResponseWriter, r *http.Request) {
-	var payload types.ModifyUrlPayload
+	var payload types.RemoveUrlPayload
 	if err := utils.ParseJSON(r, &payload); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return
@@ -104,5 +105,23 @@ func (h *Handler) handleRemoveUrl(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleGetAllUrls(w http.ResponseWriter, r *http.Request) {
+	var payload types.GetAllUrlPayload
+	if err := utils.ParseJSON(r, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	log.Println(payload.UserID)
 
+	if err := utils.Validate.Struct(payload); err != nil {
+		err = err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	urls, err := h.store.GetUrlsByUserID(payload.UserID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+	}
+	log.Println(urls)
+	utils.WriteJSON(w, http.StatusOK, map[string][]*types.UrlResponse{"urls": urls})
 }
