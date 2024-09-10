@@ -56,11 +56,51 @@ func (h *Handler) handleSaveUrl(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleModifyUrl(w http.ResponseWriter, r *http.Request) {
+	var payload types.ModifyUrlPayload
+	if err := utils.ParseJSON(r, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
 
+	if err := utils.Validate.Struct(payload); err != nil {
+		err = err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	oldUrl, err := h.store.GetUrlByShortUrl(payload.ShortUrl)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("url with this short url /%s doesn't exist", payload.ShortUrl))
+		return
+	}
+
+	newUrl := oldUrl
+	newUrl.FullUrl = payload.FullUrl
+	err = h.store.ModifyUrl(*oldUrl, *newUrl)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+	}
+	utils.WriteJSON(w, http.StatusOK, nil)
 }
 
 func (h *Handler) handleRemoveUrl(w http.ResponseWriter, r *http.Request) {
+	var payload types.ModifyUrlPayload
+	if err := utils.ParseJSON(r, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
 
+	if err := utils.Validate.Struct(payload); err != nil {
+		err = err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	err := h.store.RemoveUrl(payload.ShortUrl)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+	}
+	utils.WriteJSON(w, http.StatusOK, nil)
 }
 
 func (h *Handler) handleGetAllUrls(w http.ResponseWriter, r *http.Request) {

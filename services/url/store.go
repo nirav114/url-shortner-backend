@@ -44,10 +44,18 @@ func (s *Store) CreateUrl(url types.Url) error {
 }
 
 func (s *Store) ModifyUrl(oldUrl types.Url, newUrl types.Url) error {
+	_, err := s.db.Exec("UPDATE urls SET fullUrl = ? WHERE shortUrl = ?", newUrl.FullUrl, newUrl.ShortUrl)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (s *Store) RemoveUrl(shortUrl string) error {
+	_, err := s.db.Exec("DELETE FROM urls WHERE shortUrl = ?", shortUrl)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
