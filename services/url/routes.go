@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/nirav114/url-shortner-backend.git/services/auth"
 	"github.com/nirav114/url-shortner-backend.git/types"
 	"github.com/nirav114/url-shortner-backend.git/utils"
 )
@@ -19,14 +20,22 @@ func NewHandler(store types.UrlStore) *Handler {
 	return &Handler{store: store}
 }
 
-func (h *Handler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/saveUrl", h.handleSaveUrl).Methods("POST")
-	router.HandleFunc("/modifyUrl", h.handleModifyUrl).Methods("POST")
-	router.HandleFunc("/removeUrl", h.handleRemoveUrl).Methods("POST")
-	router.HandleFunc("/getAllUrls", h.handleGetAllUrls).Methods("POST")
+func (h *Handler) RegisterRoutes(userStore types.UserStore, router *mux.Router) {
+	router.Handle("/saveUrl", auth.JWTMiddleware(userStore, http.HandlerFunc(h.handleSaveUrl))).Methods("POST")
+	router.Handle("/modifyUrl", auth.JWTMiddleware(userStore, http.HandlerFunc(h.handleModifyUrl))).Methods("POST")
+	router.Handle("/removeUrl", auth.JWTMiddleware(userStore, http.HandlerFunc(h.handleRemoveUrl))).Methods("POST")
+	router.Handle("/getAllUrls", auth.JWTMiddleware(userStore, http.HandlerFunc(h.handleGetAllUrls))).Methods("POST")
 }
 
 func (h *Handler) handleSaveUrl(w http.ResponseWriter, r *http.Request) {
+	userClaims, ok := auth.GetUserClaimsFromContext(r.Context())
+
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("user not authenticated"))
+		return
+	}
+	userID := userClaims.UserID
+
 	var payload types.SaveUrlPayload
 	if err := utils.ParseJSON(r, &payload); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
@@ -48,7 +57,7 @@ func (h *Handler) handleSaveUrl(w http.ResponseWriter, r *http.Request) {
 	err = h.store.CreateUrl(types.Url{
 		ShortUrl: payload.ShortUrl,
 		FullUrl:  payload.FullUrl,
-		UserID:   payload.UserID,
+		UserID:   userID,
 	})
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
@@ -105,20 +114,14 @@ func (h *Handler) handleRemoveUrl(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleGetAllUrls(w http.ResponseWriter, r *http.Request) {
-	var payload types.GetAllUrlPayload
-	if err := utils.ParseJSON(r, &payload); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, err)
+	userClaims, ok := auth.GetUserClaimsFromContext(r.Context())
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("user not authenticated"))
 		return
 	}
-	log.Println(payload.UserID)
+	userID := userClaims.UserID
 
-	if err := utils.Validate.Struct(payload); err != nil {
-		err = err.(validator.ValidationErrors)
-		utils.WriteError(w, http.StatusBadRequest, err)
-		return
-	}
-
-	urls, err := h.store.GetUrlsByUserID(payload.UserID)
+	urls, err := h.store.GetUrlsByUserID(userID)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 	}

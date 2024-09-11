@@ -29,7 +29,7 @@ func (s *APIServer) Run() error {
 
 	urlStore := url.NewStore(s.db)
 	urlHandler := url.NewHandler(urlStore)
-	urlHandler.RegisterRoutes(subrouter)
+	urlHandler.RegisterRoutes(userStore, subrouter)
 
 	log.Println("Serving on", s.addr)
 	return http.ListenAndServe(s.addr, router)

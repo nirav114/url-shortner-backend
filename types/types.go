@@ -14,7 +14,6 @@ type LoginUserPayload struct {
 }
 
 type SaveUrlPayload struct {
-	UserID   int64  `json:"userID"`
 	FullUrl  string `json:"fullUrl"`
 	ShortUrl string `json:"shortUrl"`
 }
@@ -26,10 +25,6 @@ type ModifyUrlPayload struct {
 
 type RemoveUrlPayload struct {
 	ShortUrl string `json:"shortUrl"`
-}
-
-type GetAllUrlPayload struct {
-	UserID int64 `json:"userID"`
 }
 
 type User struct {
