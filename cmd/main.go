@@ -8,6 +8,7 @@ import (
 	"github.com/nirav114/url-shortner-backend.git/cmd/api"
 	"github.com/nirav114/url-shortner-backend.git/config"
 	"github.com/nirav114/url-shortner-backend.git/db"
+	"github.com/nirav114/url-shortner-backend.git/services/auth"
 )
 
 func main() {
@@ -24,6 +25,7 @@ func main() {
 		log.Fatal(err)
 	}
 	initStorage(db)
+	auth.InitRedis()
 
 	server := api.NewApiServer(":3000", db)
 	if err := server.Run(); err != nil {

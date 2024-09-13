@@ -23,12 +23,14 @@ func NewHandler(store types.UserStore) *Handler {
 func (h *Handler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/login", h.handleLogin).Methods("POST")
 	router.HandleFunc("/register", h.handleRegister).Methods("POST")
+	router.HandleFunc("/verify-otp", h.handleVerifyOTP).Methods("POST")
 }
 
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var payload types.LoginUserPayload
 	if err := utils.ParseJSON(r, &payload); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
+		return
 	}
 
 	if err := utils.Validate.Struct(payload); err != nil {
@@ -62,6 +64,7 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var payload types.RequestUserPayload
 	if err := utils.ParseJSON(r, &payload); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
+		return
 	}
 
 	if err := utils.Validate.Struct(payload); err != nil {
@@ -72,7 +75,7 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	_, err := h.store.GetUserByEmail(payload.Email)
 	if err == nil {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("user with mailid %s already exist", payload.Email))
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("user with mailid %s already exists", payload.Email))
 		return
 	}
 
@@ -81,14 +84,66 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
-	err = h.store.CreateUser(types.User{
+
+	otp, err := auth.GenerateOTP(6)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	userData := types.UserOTPData{
 		Name:     payload.Name,
 		Email:    payload.Email,
 		Password: hashedPassword,
+		OTP:      otp,
+	}
+	err = auth.StoreUserOTPData(payload.Email, userData)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, map[string]string{"message": "Registration successful. Please check your email for the OTP."})
+}
+
+func (h *Handler) handleVerifyOTP(w http.ResponseWriter, r *http.Request) {
+	var payload types.VerifyOTPPayload
+	if err := utils.ParseJSON(r, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	isValid, err := auth.ValidateOTP(payload.Email, payload.OTP)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if !isValid {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid or expired OTP"))
+		return
+	}
+
+	UserPayload, err := auth.RetrieveUserOTPData(payload.Email)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid or expired OTP"))
+		return
+	}
+	err = h.store.CreateUser(types.User{
+		Name:     UserPayload.Name,
+		Email:    UserPayload.Email,
+		Password: UserPayload.Password,
 	})
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, nil)
+	err = auth.DeleteUserOTPData(payload.Email)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "OTP verified successfully. You can now log in."})
 }

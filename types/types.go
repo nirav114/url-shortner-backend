@@ -60,3 +60,15 @@ type UrlStore interface {
 	RemoveUrl(shortUrl string) error
 	GetUrlsByUserID(id int64) ([]*UrlResponse, error)
 }
+
+type UserOTPData struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"-"`
+	OTP      string `json:"otp"`
+}
+
+type VerifyOTPPayload struct {
+	Email string `json:"email"`
+	OTP   string `json:"otp"`
+}
