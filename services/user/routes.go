@@ -75,7 +75,7 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	_, err := h.store.GetUserByEmail(payload.Email)
 	if err == nil {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("user with mailid %s already exists", payload.Email))
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("user with mail id %s already exists", payload.Email))
 		return
 	}
 
@@ -88,6 +88,12 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	otp, err := auth.GenerateOTP(6)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	err = auth.SendOTPEmail(payload.Email, otp)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("failed to send OTP email: %v", err))
 		return
 	}
 

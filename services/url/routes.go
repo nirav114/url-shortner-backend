@@ -78,9 +78,22 @@ func (h *Handler) handleModifyUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userClaims, ok := auth.GetUserClaimsFromContext(r.Context())
+
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("user not authenticated"))
+		return
+	}
+	userID := userClaims.UserID
+
 	oldUrl, err := h.store.GetUrlByShortUrl(payload.ShortUrl)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("url with this short url /%s doesn't exist", payload.ShortUrl))
+		return
+	}
+
+	if oldUrl.UserID != userID {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid url modification"))
 		return
 	}
 
@@ -106,7 +119,26 @@ func (h *Handler) handleRemoveUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.store.RemoveUrl(payload.ShortUrl)
+	userClaims, ok := auth.GetUserClaimsFromContext(r.Context())
+
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("user not authenticated"))
+		return
+	}
+	userID := userClaims.UserID
+
+	url, err := h.store.GetUrlByShortUrl(payload.ShortUrl)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("url with this short url /%s doesn't exist", payload.ShortUrl))
+		return
+	}
+
+	if url.UserID != userID {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid url removal request"))
+		return
+	}
+
+	err = h.store.RemoveUrl(payload.ShortUrl)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 	}

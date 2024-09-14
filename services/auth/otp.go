@@ -5,6 +5,9 @@ import (
 	"encoding/base32"
 	"fmt"
 	"time"
+
+	"github.com/nirav114/url-shortner-backend.git/config"
+	"gopkg.in/gomail.v2"
 )
 
 const OTPExpiry = 10 * time.Minute
@@ -44,4 +47,21 @@ func ValidateOTP(email string, submittedOTP string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func SendOTPEmail(email string, otp string) error {
+	mailer := gomail.NewMessage()
+	mailer.SetHeader("From", config.EnvConfig.MAIL_ID)
+	mailer.SetHeader("To", email)
+	mailer.SetHeader("Subject", "Your OTP Code")
+	mailer.SetBody("text/plain", fmt.Sprintf("Your OTP is: %s. It will expire in 10 minutes.", otp))
+
+	dialer := gomail.NewDialer("smtp.gmail.com", 587, config.EnvConfig.MAIL_ID, config.EnvConfig.APP_KEY)
+
+	err := dialer.DialAndSend(mailer)
+	if err != nil {
+		return fmt.Errorf("failed to send OTP email: %v", err)
+	}
+
+	return nil
 }

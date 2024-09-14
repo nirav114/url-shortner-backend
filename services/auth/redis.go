@@ -3,9 +3,11 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/nirav114/url-shortner-backend.git/config"
 	"github.com/nirav114/url-shortner-backend.git/types"
+	"github.com/redis/go-redis/v9"
 )
 
 var ctx = context.Background()
@@ -14,10 +16,9 @@ var RedisClient *redis.Client
 
 func InitRedis() {
 	RedisClient = redis.NewClient(&redis.Options{
-		Network:    "tcp",
-		Addr:       "localhost:6789",
-		DB:         0,
-		MaxRetries: 2,
+		Addr:     config.EnvConfig.REDIS_HOST,
+		Password: "",
+		DB:       0,
 	})
 
 	pong, err := RedisClient.Ping(ctx).Result()
@@ -33,7 +34,7 @@ func StoreUserOTPData(email string, user types.UserOTPData) error {
 		return err
 	}
 
-	return RedisClient.Set(ctx, email+":user", jsonData, OTPExpiry).Err()
+	return RedisClient.Set(ctx, email+":user", jsonData, 10*time.Minute).Err()
 }
 
 func RetrieveUserOTPData(email string) (*types.UserOTPData, error) {

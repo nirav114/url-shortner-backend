@@ -17,6 +17,9 @@ type Config struct {
 	DBName                 string
 	JWTExpirationInSeconds int64
 	JWTSecret              string
+	MAIL_ID                string
+	APP_KEY                string
+	REDIS_HOST             string
 }
 
 var EnvConfig = initConfig()
@@ -32,6 +35,9 @@ func initConfig() Config {
 		DBName:                 getEnv("DB_NAME", "mydb"),
 		JWTExpirationInSeconds: getEnvAsInt("JWT_EXPRATION_IN_SECONDS", 3600*24*7),
 		JWTSecret:              getEnv("JWT_SECRET", "i-dont-know-what-to-put-here"),
+		MAIL_ID:                getEnv("MAIL_ID", "mymail@mymail.com"),
+		APP_KEY:                getEnv("APP_KEY", "appKey"),
+		REDIS_HOST:             getEnv("REDIS_HOST", "localhost:6969"),
 	}
 }
 
