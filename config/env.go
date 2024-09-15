@@ -20,6 +20,7 @@ type Config struct {
 	MAIL_ID                string
 	APP_KEY                string
 	REDIS_HOST             string
+	GEO_LITE_DB            string
 }
 
 var EnvConfig = initConfig()
@@ -38,6 +39,7 @@ func initConfig() Config {
 		MAIL_ID:                getEnv("MAIL_ID", "mymail@mymail.com"),
 		APP_KEY:                getEnv("APP_KEY", "appKey"),
 		REDIS_HOST:             getEnv("REDIS_HOST", "localhost:6969"),
+		GEO_LITE_DB:            getEnv("GEO_LITE_DB", "db/geolite"),
 	}
 }
 

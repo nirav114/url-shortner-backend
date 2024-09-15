@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/nirav114/url-shortner-backend.git/types"
 )
@@ -81,6 +82,15 @@ func (s *Store) GetUrlsByUserID(id int64) ([]*types.UrlResponse, error) {
 		return nil, err
 	}
 	return urls, nil
+}
+
+func (s *Store) InsertClickData(urlID int64, ip, country, device, platform, browser, language string) error {
+	_, err := s.db.Exec("INSERT INTO clicks (urlID, clickedAt, ip_address, country, device, platform, browser, language) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", urlID, time.Now(), ip, country, device, platform, browser, language)
+	if err != nil {
+		return fmt.Errorf("error inserting click data: %w", err)
+	}
+
+	return nil
 }
 
 func scanRowIntoUrl(row *sql.Rows) (*types.Url, error) {

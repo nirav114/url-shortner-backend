@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/mssola/user_agent"
 	"github.com/nirav114/url-shortner-backend.git/services/auth"
 	"github.com/nirav114/url-shortner-backend.git/types"
 	"github.com/nirav114/url-shortner-backend.git/utils"
@@ -25,11 +26,11 @@ func (h *Handler) RegisterRoutes(userStore types.UserStore, router *mux.Router) 
 	router.Handle("/modifyUrl", auth.JWTMiddleware(userStore, http.HandlerFunc(h.handleModifyUrl))).Methods("POST")
 	router.Handle("/removeUrl", auth.JWTMiddleware(userStore, http.HandlerFunc(h.handleRemoveUrl))).Methods("POST")
 	router.Handle("/getAllUrls", auth.JWTMiddleware(userStore, http.HandlerFunc(h.handleGetAllUrls))).Methods("POST")
+	router.HandleFunc("/r/{shortUrl}", h.handleURLRedirect).Methods("GET")
 }
 
 func (h *Handler) handleSaveUrl(w http.ResponseWriter, r *http.Request) {
 	userClaims, ok := auth.GetUserClaimsFromContext(r.Context())
-
 	if !ok {
 		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("user not authenticated"))
 		return
@@ -79,7 +80,6 @@ func (h *Handler) handleModifyUrl(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userClaims, ok := auth.GetUserClaimsFromContext(r.Context())
-
 	if !ok {
 		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("user not authenticated"))
 		return
@@ -120,7 +120,6 @@ func (h *Handler) handleRemoveUrl(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userClaims, ok := auth.GetUserClaimsFromContext(r.Context())
-
 	if !ok {
 		utils.WriteError(w, http.StatusUnauthorized, fmt.Errorf("user not authenticated"))
 		return
@@ -159,4 +158,31 @@ func (h *Handler) handleGetAllUrls(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println(urls)
 	utils.WriteJSON(w, http.StatusOK, map[string][]*types.UrlResponse{"urls": urls})
+}
+
+func (h *Handler) handleURLRedirect(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	shortUrl := vars["shortUrl"]
+
+	url, err := h.store.GetUrlByShortUrl(shortUrl)
+	if err != nil {
+		http.Error(w, "URL not found", http.StatusNotFound)
+		return
+	}
+
+	ip := utils.GetIPAddress(r)
+	ua := user_agent.New(r.UserAgent())
+	browser, version := utils.GetBrowserInfo(ua)
+	device := utils.GetDeviceType(ua)
+	platform := utils.GetPlatform(ua)
+	language := utils.GetLanguage(r)
+	country := utils.GetCountryFromIP(ip)
+
+	err = h.store.InsertClickData(url.ID, ip, country, device, platform, browser+" "+version, language)
+	if err != nil {
+		http.Error(w, "Failed to track click", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, url.FullUrl, http.StatusMovedPermanently)
 }

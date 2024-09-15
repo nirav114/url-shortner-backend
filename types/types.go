@@ -59,6 +59,7 @@ type UrlStore interface {
 	ModifyUrl(oldUrl Url, newUrl Url) error
 	RemoveUrl(shortUrl string) error
 	GetUrlsByUserID(id int64) ([]*UrlResponse, error)
+	InsertClickData(urlID int64, ip, country, device, platform, browser, language string) error
 }
 
 type UserOTPData struct {

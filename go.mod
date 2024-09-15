@@ -15,6 +15,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/oschwald/maxminddb-golang v1.13.0 // indirect
 	github.com/redis/go-redis/v9 v9.6.1 // indirect
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
@@ -28,6 +29,8 @@ require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/mssola/user_agent v0.6.0
+	github.com/oschwald/geoip2-golang v1.11.0
 	golang.org/x/crypto v0.27.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
