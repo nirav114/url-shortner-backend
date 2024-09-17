@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/mssola/user_agent"
 	"github.com/nirav114/url-shortner-backend.git/config"
@@ -87,4 +88,18 @@ func GetCountryFromIP(ip string) string {
 
 func GetLanguage(r *http.Request) string {
 	return r.Header.Get("Accept-Language")
+}
+
+func GetPrimaryLanguage(acceptLang string) string {
+	if acceptLang == "" {
+		return "unknown"
+	}
+
+	parts := strings.Split(acceptLang, ",")
+	if len(parts) > 0 {
+		lang := strings.Split(parts[0], ";")[0]
+		return lang
+	}
+
+	return "unknown"
 }

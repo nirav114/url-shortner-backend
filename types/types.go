@@ -27,6 +27,10 @@ type RemoveUrlPayload struct {
 	ShortUrl string `json:"shortUrl"`
 }
 
+type GetStatsPayload struct {
+	ShortUrl string `json:"shortUrl"`
+}
+
 type User struct {
 	ID        int64     `json:"id"`
 	Name      string    `json:"name"`
@@ -60,6 +64,7 @@ type UrlStore interface {
 	RemoveUrl(shortUrl string) error
 	GetUrlsByUserID(id int64) ([]*UrlResponse, error)
 	InsertClickData(urlID int64, ip, country, device, platform, browser, language string) error
+	GetClicksByID(urlID int64) ([]*Click, error)
 }
 
 type UserOTPData struct {
@@ -72,4 +77,16 @@ type UserOTPData struct {
 type VerifyOTPPayload struct {
 	Email string `json:"email"`
 	OTP   string `json:"otp"`
+}
+
+type Click struct {
+	ID        int64     `json:"id"`
+	UrlID     int64     `json:"urlID"`
+	Timestamp time.Time `json:"timestamp"`
+	IPAddress string    `json:"ip_address"`
+	Country   string    `json:"country"`
+	Device    string    `json:"device"`
+	Platform  string    `json:"platform"`
+	Browser   string    `json:"browser"`
+	Language  string    `json:"language"`
 }

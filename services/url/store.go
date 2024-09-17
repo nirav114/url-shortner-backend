@@ -93,6 +93,28 @@ func (s *Store) InsertClickData(urlID int64, ip, country, device, platform, brow
 	return nil
 }
 
+func (s *Store) GetClicksByID(id int64) ([]*types.Click, error) {
+	rows, err := s.db.Query("SELECT * FROM clicks WHERE urlID = ?", id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var clicks []*types.Click
+	for rows.Next() {
+		click, err := scanRowIntoClick(rows)
+		if err != nil {
+			return nil, err
+		}
+		clicks = append(clicks, click)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return clicks, nil
+}
+
 func scanRowIntoUrl(row *sql.Rows) (*types.Url, error) {
 	url := new(types.Url)
 	err := row.Scan(
@@ -105,4 +127,23 @@ func scanRowIntoUrl(row *sql.Rows) (*types.Url, error) {
 		return nil, err
 	}
 	return url, nil
+}
+
+func scanRowIntoClick(row *sql.Rows) (*types.Click, error) {
+	click := new(types.Click)
+	err := row.Scan(
+		&click.ID,
+		&click.UrlID,
+		&click.Timestamp,
+		&click.IPAddress,
+		&click.Country,
+		&click.Device,
+		&click.Platform,
+		&click.Browser,
+		&click.Language,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return click, nil
 }
