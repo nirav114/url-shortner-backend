@@ -65,6 +65,7 @@ type UrlStore interface {
 	GetUrlsByUserID(id int64) ([]*UrlResponse, error)
 	InsertClickData(urlID int64, ip, country, device, platform, browser, language string) error
 	GetClicksByID(urlID int64) ([]*Click, error)
+	GetClicksByHour(urlID int64) ([]HourlyClickStat, error)
 }
 
 type UserOTPData struct {
@@ -89,4 +90,9 @@ type Click struct {
 	Platform  string    `json:"platform"`
 	Browser   string    `json:"browser"`
 	Language  string    `json:"language"`
+}
+
+type HourlyClickStat struct {
+	Hour       int `json:"hour"`
+	ClickCount int `json:"click_count"`
 }

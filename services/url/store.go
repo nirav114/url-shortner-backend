@@ -115,6 +115,29 @@ func (s *Store) GetClicksByID(id int64) ([]*types.Click, error) {
 	return clicks, nil
 }
 
+func (s *Store) GetClicksByHour(urlID int64) ([]types.HourlyClickStat, error) {
+	rows, err := s.db.Query(`
+        SELECT HOUR(clickedAt) AS hour, COUNT(*) AS click_count
+        FROM clicks
+        WHERE clickedAt >= NOW() - INTERVAL 1 DAY AND urlID = ?
+        GROUP BY HOUR(clickedAt)
+        ORDER BY HOUR(clickedAt)`, urlID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []types.HourlyClickStat
+	for rows.Next() {
+		var stat types.HourlyClickStat
+		if err := rows.Scan(&stat.Hour, &stat.ClickCount); err != nil {
+			return nil, err
+		}
+		stats = append(stats, stat)
+	}
+	return stats, nil
+}
+
 func scanRowIntoUrl(row *sql.Rows) (*types.Url, error) {
 	url := new(types.Url)
 	err := row.Scan(
