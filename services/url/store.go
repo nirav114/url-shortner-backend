@@ -176,6 +176,44 @@ func (s *Store) GetClicksByDayLast30Days(urlID int64) ([]types.DailyClickStat, e
 	return dailyClickStats, nil
 }
 
+func (s *Store) GetClicksByMonthLast12Months(urlID int64) ([]types.MonthlyClickStat, error) {
+	query := `
+        SELECT 
+    		DATE_FORMAT(clickedAt, '%m') AS month, 
+    		COUNT(*) AS click_count
+		FROM 
+    		clicks
+		WHERE 
+		    urlID = ? AND
+			clickedAt >= NOW() - INTERVAL 12 MONTH 
+		GROUP BY 
+    		DATE_FORMAT(clickedAt, '%m')
+		ORDER BY 
+    		DATE_FORMAT(clickedAt, '%m');
+    `
+
+	rows, err := s.db.Query(query, urlID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var monthlyClickStats []types.MonthlyClickStat
+	for rows.Next() {
+		var stat types.MonthlyClickStat
+		if err := rows.Scan(&stat.Month, &stat.ClickCount); err != nil {
+			return nil, err
+		}
+		monthlyClickStats = append(monthlyClickStats, stat)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return monthlyClickStats, nil
+}
+
 func scanRowIntoUrl(row *sql.Rows) (*types.Url, error) {
 	url := new(types.Url)
 	err := row.Scan(

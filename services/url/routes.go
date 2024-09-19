@@ -256,6 +256,17 @@ func (h *Handler) handleGetStats(w http.ResponseWriter, r *http.Request) {
 		dailyClickStat[dc.Day] = dc.ClickCount
 	}
 
+	monthlyClicks, err := h.store.GetClicksByMonthLast12Months(url.ID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	monthlyClickStat := make(map[string]int)
+	for _, mc := range monthlyClicks {
+		monthlyClickStat[mc.Month] = mc.ClickCount
+	}
+
 	stats := map[string]interface{}{
 		"country_count":  countryCount,
 		"device_count":   deviceCount,
@@ -265,6 +276,7 @@ func (h *Handler) handleGetStats(w http.ResponseWriter, r *http.Request) {
 		"click_type":     clickType,
 		"hourly_clicks":  hourlyClickStats,
 		"daily_clicks":   dailyClickStat,
+		"monthly_clicks": monthlyClickStat,
 	}
 
 	utils.WriteJSON(w, http.StatusOK, stats)

@@ -67,6 +67,7 @@ type UrlStore interface {
 	GetClicksByID(urlID int64) ([]*Click, error)
 	GetClicksByHourLast24Hours(urlID int64) ([]HourlyClickStat, error)
 	GetClicksByDayLast30Days(urlID int64) ([]DailyClickStat, error)
+	GetClicksByMonthLast12Months(urlID int64) ([]MonthlyClickStat, error)
 }
 
 type UserOTPData struct {
@@ -100,5 +101,10 @@ type HourlyClickStat struct {
 
 type DailyClickStat struct {
 	Day        string `json:"day"`
+	ClickCount int    `json:"click_count"`
+}
+
+type MonthlyClickStat struct {
+	Month      string `json:"month"`
 	ClickCount int    `json:"click_count"`
 }
