@@ -234,7 +234,7 @@ func (h *Handler) handleGetStats(w http.ResponseWriter, r *http.Request) {
 		"total":  len(clicks),
 	}
 
-	hourlyClicks, err := h.store.GetClicksByHour(url.ID)
+	hourlyClicks, err := h.store.GetClicksByHourLast24Hours(url.ID)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -245,6 +245,17 @@ func (h *Handler) handleGetStats(w http.ResponseWriter, r *http.Request) {
 		hourlyClickStats[hc.Hour] = hc.ClickCount
 	}
 
+	dailyClicks, err := h.store.GetClicksByDayLast30Days(url.ID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	dailyClickStat := make(map[string]int)
+	for _, dc := range dailyClicks {
+		dailyClickStat[dc.Day] = dc.ClickCount
+	}
+
 	stats := map[string]interface{}{
 		"country_count":  countryCount,
 		"device_count":   deviceCount,
@@ -253,6 +264,7 @@ func (h *Handler) handleGetStats(w http.ResponseWriter, r *http.Request) {
 		"language_count": languageCount,
 		"click_type":     clickType,
 		"hourly_clicks":  hourlyClickStats,
+		"daily_clicks":   dailyClickStat,
 	}
 
 	utils.WriteJSON(w, http.StatusOK, stats)

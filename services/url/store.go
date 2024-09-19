@@ -115,7 +115,7 @@ func (s *Store) GetClicksByID(id int64) ([]*types.Click, error) {
 	return clicks, nil
 }
 
-func (s *Store) GetClicksByHour(urlID int64) ([]types.HourlyClickStat, error) {
+func (s *Store) GetClicksByHourLast24Hours(urlID int64) ([]types.HourlyClickStat, error) {
 	rows, err := s.db.Query(`
         SELECT HOUR(clickedAt) AS hour, COUNT(*) AS click_count
         FROM clicks
@@ -136,6 +136,44 @@ func (s *Store) GetClicksByHour(urlID int64) ([]types.HourlyClickStat, error) {
 		stats = append(stats, stat)
 	}
 	return stats, nil
+}
+
+func (s *Store) GetClicksByDayLast30Days(urlID int64) ([]types.DailyClickStat, error) {
+	query := `
+        SELECT 
+		    DAY(clickedAt) AS day,
+    		COUNT(*) AS click_count
+		FROM 
+    		clicks
+		WHERE 
+			urlID = ? AND
+    		clickedAt >= NOW() - INTERVAL 30 DAY
+		GROUP BY 
+    		DAY(clickedAt)
+		ORDER BY 
+    		DAY(clickedAt);
+    `
+
+	rows, err := s.db.Query(query, urlID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var dailyClickStats []types.DailyClickStat
+	for rows.Next() {
+		var stat types.DailyClickStat
+		if err := rows.Scan(&stat.Day, &stat.ClickCount); err != nil {
+			return nil, err
+		}
+		dailyClickStats = append(dailyClickStats, stat)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return dailyClickStats, nil
 }
 
 func scanRowIntoUrl(row *sql.Rows) (*types.Url, error) {
